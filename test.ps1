@@ -1,9 +1,13 @@
+using module psCandy
+
 [system.console]::CursorVisible = $false
 
 [system.Console]::Clear()
 Write-SpectreRule -Title "Get Winget Installed Packages" -Alignment Center
 $list = invoke-SpectreCommandWithStatus -Spinner Dots -Title "Get Packages"  -ScriptBlock{
-  return  Get-WinGetPackage
+  # return  Get-WinGetPackage
+  $list = Find-WinGetPackage -Query "code" | Where-Object {$_.Source -eq "winget"}
+  return $list
 }
 
 $script:i = 0
@@ -14,7 +18,9 @@ function buildItem {
     [psCustomObject]$Object,
     [String]$field
   )
-  $string =  ([string]$Object.$field).PadRight(80)
+  [string]$string = $($Object.$field)
+  $string =  [candyString]::PadString($string,50," ", [Align]::Left)
+  
   $index = $partial.indexof($Object)
   if ($index -eq $script:i) {
      return (Build-Candy "<White><Underline>$($string)</White>")
@@ -25,11 +31,14 @@ function buildItem {
 }
 
 [system.Console]::Clear()
-$properties = @( @{'Name'= "Package $($script:skip)"; Expression = {buildItem -Object $_ -field "Name"} ;width = 80})
+
 $redraw = $true
 $stop = $false
 while (-not $stop) {
   if ($redraw) {
+    $properties = @( @{"Name" = ""; Expression = {""}; width = 1},
+                     @{'Name'= "Package $($script:skip)"; Expression = {buildItem -Object $_ -field "Name"} ;width = 50},
+                     @{"Name" = "Id"; Expression = {buildItem -Object $_ -field "Id"}; width = 50})
     $partial = ($list | Select-Object -skip ($script:skip) -First ($Host.UI.RawUI.BufferSize.Height -7))
     Format-SpectreTable -Data $partial -Property $properties | Out-SpectreHost
     [system.console]::SetCursorPosition(0, 0)
