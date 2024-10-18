@@ -14,10 +14,10 @@ function buildItem {
     [psCustomObject]$Object,
     [String]$field
   )
-  $string = $Object.$field
+  $string =  ([string]$Object.$field).PadRight(80)
   $index = $partial.indexof($Object)
   if ($index -eq $script:i) {
-     return (Build-Candy "<White>$($string)</White>")
+     return (Build-Candy "<White><Underline>$($string)</White>")
   } else {
     return (Build-Candy "<Green>$($string)</Green>")
   }
